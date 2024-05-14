@@ -1,4 +1,4 @@
-package com.ruki.tierbnb.main
+package com.ruki.tierbnb.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +20,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import com.ruki.tierbnb.R
 
 @Composable
@@ -30,7 +32,7 @@ fun MainScreen(navController: NavController, auth: FirebaseAuth) {
     {
         IconButton(
             modifier = Modifier
-                .align(Alignment.TopStart),
+                .align(Alignment.CenterStart),
             onClick = {
                 auth.signOut()
                 navController.navigate("login_screen")
@@ -59,3 +61,4 @@ fun MainScreen(navController: NavController, auth: FirebaseAuth) {
         }
     }
 }
+

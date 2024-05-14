@@ -1,4 +1,4 @@
-package com.ruki.tierbnb
+package com.ruki.tierbnb.components
 
 import android.content.Context
 import android.widget.Toast
