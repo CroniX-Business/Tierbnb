@@ -8,11 +8,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,12 +19,10 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -34,25 +30,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.ui.BottomNavigation
-import com.google.accompanist.insets.ui.TopAppBar
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
+import com.ruki.tierbnb.costume_modifier.topBorder
+import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.screens.LoginScreen
 import com.ruki.tierbnb.screens.RegisterScreen
 import com.ruki.tierbnb.screens.MainScreen
 import com.ruki.tierbnb.ui.theme.BottomBarAnimationTheme
+import com.ruki.tierbnb.screens.LoadingScreen
+import com.ruki.tierbnb.ui.theme.LightBlue
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val db = Firebase.firestore
+
             val auth: FirebaseAuth = Firebase.auth
             val navController = rememberNavController()
 
             LaunchedEffect(key1 = auth.currentUser) {
+                //delay(3000)
                 auth.currentUser?.let {
-                    navController.navigate("main_screen") {
+                    navController.navigate(NavigationItem.HomeScreen.route) {
                         popUpTo(navController.graph.startDestinationId)
                     }
                 } ?: run {
@@ -67,7 +70,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth,) {
+fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth) {
 
     // State of bottomBar, set state to false, if current page route is "car_details"
     val bottomBarState = rememberSaveable { (mutableStateOf(true)) }
@@ -81,24 +84,19 @@ fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth,)
 
         // Control TopBar and BottomBar
         when (navBackStackEntry?.destination?.route) {
-            "cars" -> {
+            "main_screen" -> {
                 // Show BottomBar and TopBar
                 bottomBarState.value = true
                 topBarState.value = true
             }
-            "bikes" -> {
+            "map_screen" -> {
                 // Show BottomBar and TopBar
                 bottomBarState.value = true
-                topBarState.value = true
+                topBarState.value = false
             }
-            "settings" -> {
+            "profile_screen" -> {
                 // Show BottomBar and TopBar
                 bottomBarState.value = true
-                topBarState.value = true
-            }
-            "car_details" -> {
-                // Hide BottomBar and TopBar
-                bottomBarState.value = false
                 topBarState.value = false
             }
         }
@@ -109,7 +107,7 @@ fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth,)
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
 
                 // Determine visibility based on the current route
-                val shouldShowBottomBar = currentRoute !in listOf("loading_screen", "login_screen", "register_screen")
+                val shouldShowBottomBar = currentRoute in listOf("main_screen", "map_screen", "profile_screen")
 
                 if (shouldShowBottomBar) {
                     BottomBar(
@@ -118,7 +116,7 @@ fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth,)
                         )
                 }
             },
-            topBar = {
+            /*topBar = {
                 // Determine visibility based on the current route
                 val shouldShowTopBar = navController.currentBackStackEntry?.destination?.route !in listOf("loading_screen", "login_screen", "register_screen")
 
@@ -128,7 +126,7 @@ fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth,)
                         topBarState = topBarState
                     )
                 }
-            },
+            },*/
             content = {
                 NavHost(
                     navController = navController,
@@ -169,20 +167,26 @@ fun BottomBar(navController: NavController, bottomBarState: MutableState<Boolean
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
         content = {
-            BottomNavigation {
+            BottomNavigation{
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
                 items.forEach { item ->
+                    val selected = currentRoute == item.route
+
                     BottomNavigationItem(
                         icon = {
-                            Icon(imageVector = item.icon, contentDescription = "")
+                            Icon(imageVector = item.icon,
+                                contentDescription = "",
+                                tint = if (selected) LightBlue else Color.Black)
                         },
-                        label = { Text(text = item.title) },
-                        selected = currentRoute == item.route,
+                        label = { Text(text = item.title, color = if (selected) LightBlue else Color.Black) },
+                        selected = selected,
+                        modifier = Modifier
+                            .background(Color.White)
+                            .topBorder(color = Color.Gray.copy(0.3F)),
                         onClick = {
                             navController.navigate(item.route) {
-                                // Customize navigation options here if needed
                             }
                         }
                     )
@@ -192,7 +196,7 @@ fun BottomBar(navController: NavController, bottomBarState: MutableState<Boolean
     )
 }
 
-@Composable
+/*@Composable
 fun TopBar(navController: NavController, topBarState: MutableState<Boolean>) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -204,16 +208,20 @@ fun TopBar(navController: NavController, topBarState: MutableState<Boolean>) {
     }
 
     AnimatedVisibility(
-        visible = currentRoute !in listOf("loading_screen", "login_screen", "register_screen"),
+        visible = topBarState.value,
+        //currentRoute in listOf("main_screen", "map_screen", "profile_screen"),
         enter = slideInVertically(initialOffsetY = { -it }),
         exit = slideOutVertically(targetOffsetY = { -it }),
         content = {
             TopAppBar(
+                modifier = Modifier
+                    .height(150.dp),
+                backgroundColor = Color.White,
                 title = { Text(text = title) },
             )
         }
     )
-}
+}*/
 
 @Composable
 fun BackgroundImage(modifier: Modifier, @DrawableRes imageResource: Int) {
@@ -223,19 +231,6 @@ fun BackgroundImage(modifier: Modifier, @DrawableRes imageResource: Int) {
             contentDescription = null,
             contentScale = ContentScale.Crop,
             alpha = 0.8F
-        )
-    }
-}
-
-@Composable
-fun LoadingScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(100.dp),
-            color = Color.Cyan
         )
     }
 }

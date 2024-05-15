@@ -75,4 +75,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.navigation.compose.v275)
     implementation(libs.accompanist.insets.ui)
+    implementation(kotlin("reflect"))
 }

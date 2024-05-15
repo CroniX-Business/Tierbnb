@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -27,7 +28,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +48,8 @@ fun RegisterScreen(navController: NavController, auth: FirebaseAuth,) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordRep by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisibleRep by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -92,10 +97,18 @@ fun RegisterScreen(navController: NavController, auth: FirebaseAuth,) {
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Lozinka") },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.padding(vertical = 8.dp),
                 shape = RoundedCornerShape(10.dp),
-                textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold),
+                textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Start),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    val image = if (passwordVisible) R.drawable.eye_show_svgrepo_com else R.drawable.eye_hide_svgrepo_com
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(painter = painterResource(image), contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = LightBlue,
                     unfocusedBorderColor = Color.White,
@@ -104,11 +117,19 @@ fun RegisterScreen(navController: NavController, auth: FirebaseAuth,) {
             OutlinedTextField(
                 value = passwordRep,
                 onValueChange = { passwordRep = it },
-                label = { Text("Ponovite lozinku") },
-                visualTransformation = PasswordVisualTransformation(),
+                label = { Text("Lozinka") },
+                visualTransformation = if (passwordVisibleRep) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.padding(vertical = 8.dp),
                 shape = RoundedCornerShape(10.dp),
-                textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold),
+                textStyle = TextStyle(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Start),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    val image = if (passwordVisibleRep) R.drawable.eye_show_svgrepo_com else R.drawable.eye_hide_svgrepo_com
+
+                    IconButton(onClick = { passwordVisibleRep = !passwordVisibleRep }) {
+                        Icon(painter = painterResource(image), contentDescription = if (passwordVisibleRep) "Hide password" else "Show password")
+                    }
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = LightBlue,
                     unfocusedBorderColor = Color.White,

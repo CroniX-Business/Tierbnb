@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.components.showToast
 
 fun register(
@@ -35,13 +36,13 @@ fun register(
                 user?.let { firebaseUser ->
                     createFirestoreCollectionForUser(firebaseUser)
                 }
-                navController.navigate("main_screen") {
+                navController.navigate(NavigationItem.HomeScreen.route) {
                     popUpTo(navController.graph.startDestinationId)
                 }
             } else {
                 val errorText = when (task.exception) {
-                    is FirebaseAuthInvalidUserException -> "Invalid user. Please check your email."
-                    is FirebaseAuthInvalidCredentialsException -> "Invalid credentials. Please check your email and password."
+                    is FirebaseAuthInvalidUserException -> "Ne postojeći korisnik."
+                    is FirebaseAuthInvalidCredentialsException -> "Nevažeći podatci."
                     is FirebaseAuthUserCollisionException -> "User with this email already exists."
                     else -> "Registracija neuspješna. Pokušajte ponovo."
                 }
