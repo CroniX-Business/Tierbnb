@@ -24,6 +24,6 @@ sealed class CarItems(var name: String, var icon: Int) {
 
     object BMW : CarItems(
         name = "BMW",
-        icon = R.drawable.ic_bmw_logo,
+        icon = R.drawable.ic_bmw,
     )
 }
