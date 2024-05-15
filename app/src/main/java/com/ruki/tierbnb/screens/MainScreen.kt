@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
@@ -53,33 +58,57 @@ fun MainScreen(navController: NavController, auth: FirebaseAuth) {
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+            .fillMaxWidth()
+            .background(Color.LightGray)
     ) {
-        SearchBar(onSearch = { query ->
-            // Handle search query
-            // searchViewModel.performSearch(query)
-        })
-        SliderNavigationBar(
-            selectedOption = selectedOption,
-            onOptionSelected = { newOption ->
-                selectedOption = newOption
-            }
-        )
+        // Top Section: SearchBar and SliderNavigationBar inside a blue Box
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = LightBlue)
+                .padding(vertical = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = LightBlue),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SearchBar(onSearch = { query ->
+                    // Handle search query
+                    // searchViewModel.performSearch(query)
+                })
 
-        Divider(modifier = Modifier
-            .padding(bottom = 5.dp),
-            color = Color.LightGray,
-            thickness = 2.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SliderNavigationBar(
+                    selectedOption = selectedOption,
+                    onOptionSelected = { newOption ->
+                        selectedOption = newOption
+                    }
+                )
+            }
+        }
+
+        Divider(
+            color = Color.Gray,
+            thickness = 2.dp
+        )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Black)
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .padding(horizontal = 16.dp)
+                .background(color = Color.LightGray),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
+            Text(
+                text = "This is the bottom section",
+                color = Color.White
+            )
         }
     }
 }
@@ -88,38 +117,48 @@ fun MainScreen(navController: NavController, auth: FirebaseAuth) {
 fun SearchBar(onSearch: (String) -> Unit) {
     var searchText by remember { mutableStateOf("") }
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .border(width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(12.dp))
-            .background(color = Color.White)
+            .background(color = LightBlue)
             .padding(horizontal = 8.dp)
-            .height(50.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .height(50.dp)
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Search,
-            contentDescription = "Search Icon",
-            tint = Color.Black,
-            modifier = Modifier.padding(start = 8.dp, end = 4.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(30.dp))
+                .clip(RoundedCornerShape(30.dp))
+                .background(Color.White),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = "Search Icon",
+                tint = Color.Black,
+                modifier = Modifier
+                    .padding(start = 8.dp, end = 4.dp)
+            )
 
-        BasicTextField(
-            value = searchText,
-            onValueChange = { searchText = it },
-            textStyle = LocalTextStyle.current.copy(color = Color.Black),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    onSearch(searchText)
-                }
-            ),
-            modifier = Modifier.weight(1f)
-        )
+            BasicTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                textStyle = LocalTextStyle.current.copy(color = Color.Black),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        onSearch(searchText)
+                    }
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 8.dp) // Adjust padding as needed
+            )
+        }
     }
 }
 
@@ -135,13 +174,12 @@ fun SliderNavigationBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 2.dp, top = 15.dp)
+            .padding(top = 10.dp)
     ) {
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(55.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             itemsIndexed(options.reversed()) { index, option ->
                 OptionItem(
@@ -163,8 +201,8 @@ fun OptionItem(
     Box(
         modifier = Modifier
             .clickable(onClick = onOptionSelected)
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .bottomBorder(if (isSelected) Color.Black else Color.Transparent, yOffSet = -10)
+            .padding(horizontal = 16.dp)
+            .bottomBorder(if (isSelected) Color.Black else Color.Transparent, yOffSet = -50, width = 2.dp)
             .width(60.dp),
         contentAlignment = Alignment.Center
     ) {
