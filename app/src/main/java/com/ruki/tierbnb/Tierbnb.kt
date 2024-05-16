@@ -1,5 +1,8 @@
 package com.ruki.tierbnb
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -43,6 +46,7 @@ import com.ruki.tierbnb.ui.theme.BottomBarAnimationTheme
 import com.ruki.tierbnb.screens.LoadingScreen
 import com.ruki.tierbnb.ui.theme.LightBlue
 
+@SuppressLint("MissingPermission")
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,31 +75,22 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth) {
-
-    // State of bottomBar, set state to false, if current page route is "car_details"
     val bottomBarState = rememberSaveable { (mutableStateOf(true)) }
-
-    // State of topBar, set state to false, if current page route is "car_details"
     val topBarState = rememberSaveable { (mutableStateOf(true)) }
 
     BottomBarAnimationTheme {
-        // Subscribe to navBackStackEntry, required to get current route
         val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-        // Control TopBar and BottomBar
         when (navBackStackEntry?.destination?.route) {
             "main_screen" -> {
-                // Show BottomBar and TopBar
                 bottomBarState.value = true
                 topBarState.value = true
             }
             "map_screen" -> {
-                // Show BottomBar and TopBar
                 bottomBarState.value = true
                 topBarState.value = false
             }
             "profile_screen" -> {
-                // Show BottomBar and TopBar
                 bottomBarState.value = true
                 topBarState.value = false
             }
@@ -103,10 +98,7 @@ fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth) 
 
         com.google.accompanist.insets.ui.Scaffold(
             bottomBar = {
-                // Extract the current route from the navigation controller
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
-
-                // Determine visibility based on the current route
                 val shouldShowBottomBar = currentRoute in listOf("main_screen", "map_screen", "profile_screen")
 
                 if (shouldShowBottomBar) {
