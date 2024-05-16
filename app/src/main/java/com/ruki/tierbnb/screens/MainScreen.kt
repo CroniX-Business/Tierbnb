@@ -1,5 +1,10 @@
 package com.ruki.tierbnb.screens
 
+import Car
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -25,10 +31,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,26 +57,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.firebase.auth.FirebaseAuth
 import com.ruki.tierbnb.R
 import com.ruki.tierbnb.costume_modifier.bottomBorder
 import com.ruki.tierbnb.models.CarItems
 import com.ruki.tierbnb.ui.theme.GrayBackground
 import com.ruki.tierbnb.ui.theme.LightBlue
-import Car
 import com.ruki.tierbnb.view_models.CarViewModel
+import kotlinx.coroutines.delay
+import java.util.Locale
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+
 
 @Composable
-fun MainScreen(navController: NavController, auth: FirebaseAuth) {
+fun MainScreen(
+    navController: NavController,
+    auth: FirebaseAuth,
+    fusedLocationClient: FusedLocationProviderClient
+) {
     var selectedOption by remember { mutableStateOf("Near") }
     var selectedCar by remember { mutableStateOf("") }
-    var cityName by remember { mutableStateOf("City: Unknown") }
+    var cityName by remember { mutableStateOf("Unknown") }
+    var userLatitude by remember { mutableStateOf(0.0) }
+    var userLongitude by remember { mutableStateOf(0.0) }
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
-
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -111,41 +129,125 @@ fun MainScreen(navController: NavController, auth: FirebaseAuth) {
             thickness = 2.dp
         )
 
-        Button(
-            onClick = {
-            },
-            modifier = Modifier
-                .height(50.dp)
-                .width(120.dp)
-                .align(Alignment.Start)
-                .padding(top = 10.dp, start = 16.dp),
-            shape = RoundedCornerShape(20),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray, contentColor = Color.Black)
+        val context = LocalContext.current
+
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Text(
-                text = cityName,
-                fontSize = 12.sp
-            )
+            return
         }
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    userLatitude = location.latitude
+                    userLongitude = location.longitude
+
+                    val geocoder = Geocoder(context, Locale.getDefault())
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+
+                    if (addresses != null) {
+                        if (addresses.isNotEmpty()) {
+                            val address = addresses.get(0)
+                            cityName = address.locality
+
+                        }
+                    }
+                }
+            }
+            .addOnFailureListener { exception: Exception ->
+            }
 
         Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp, start = 16.dp, end = 10.dp)
+        ) {
+            if (selectedOption == "Near") {
+                Text(
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width(130.dp)
+                        .wrapContentHeight()
+                        .border(
+                            width = 2.dp,
+                            color = Color.LightGray,
+                            shape = RoundedCornerShape(20)
+                        )
+                        .clip(RoundedCornerShape(20))
+                        .background(Color.LightGray),
+                    text = cityName,
+                    fontSize = 13.sp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            IconButton(
+                onClick = { /* do something */ },
+            ) {
+                Icon(Icons.Outlined.Settings, contentDescription = "Filter")
+            }
+        }
+
+        val carViewModel: CarViewModel = viewModel()
+        val cars by carViewModel.cars.collectAsState()
+
+        val maxDistanceInKm = 50.0
+
+        val filteredCars = cars.filter { car ->
+            when (selectedOption) {
+                "Near" -> {
+                    val carLatitude = car.latitude
+                    val carLongitude = car.longitude
+                    val distance = calculateDistanceInKm(userLatitude, userLongitude, carLatitude, carLongitude)
+                    distance <= maxDistanceInKm
+                }
+                "Luxury" -> car.luxury == true
+                else -> car.type == selectedOption
+            }
+        }
+
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(horizontal = 16.dp)
         ) {
-            SliderCars(
-                selectedCar = selectedCar,
-                onCarSelected = { newOption ->
-                    selectedCar = newOption
-                }
-            )
+            itemsIndexed(filteredCars) { index, car ->
+                CarItem(
+                    car = car,
+                    isSelected = car.name == selectedCar,
+                    onCarSelected = { /*onCarSelected(car.name)*/ }
+                )
+            }
         }
     }
 }
 
+fun calculateDistanceInKm(
+    latUser: Double, lonUser: Double,
+    latCar: Double, lonCar: Double
+): Double {
+    val radius = 6371
+
+    println("USER - Lat: ${latUser} - Long: ${lonUser}")
+    println("CAR - Lat: ${latCar} - Long: ${lonCar}")
+
+    val dLat = Math.toRadians(latCar - latUser)
+    val dLon = Math.toRadians(lonCar - lonUser)
+    val a = sin(dLat / 2) * sin(dLat / 2) +
+            cos(Math.toRadians(latUser)) * cos(Math.toRadians(latCar)) *
+            sin(dLon / 2) * sin(dLon / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    return radius * c
+}
 
 @Composable
 fun SearchBar(onSearch: (String) -> Unit) {
@@ -341,7 +443,7 @@ fun CarItem(
                     .padding(bottom = 5.dp),
             ) {
                 Text(
-                    text = "${car.name} | ${car.year}",
+                    text = "${car.type} ${car.name} | ${car.year}",
                     textAlign = TextAlign.Start,
                     color = Color.Black,
                     fontSize = 18.sp,

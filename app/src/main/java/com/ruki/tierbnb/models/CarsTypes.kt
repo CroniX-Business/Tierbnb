@@ -7,10 +7,6 @@ sealed class CarItems(var name: String, var icon: Int) {
         name = "Near",
         icon = R.drawable.ic_location_svgrepo_com,
     )
-    object Hot : CarItems(
-        name = "Hot",
-        icon = R.drawable.ic_fire_svgrepo_com,
-    )
 
     object Luxury : CarItems(
         name = "Luxury",
@@ -25,5 +21,10 @@ sealed class CarItems(var name: String, var icon: Int) {
     object BMW : CarItems(
         name = "BMW",
         icon = R.drawable.ic_bmw,
+    )
+
+    object  Ford : CarItems(
+        name = "Ford",
+        icon = R.drawable.ic_ford_logo,
     )
 }

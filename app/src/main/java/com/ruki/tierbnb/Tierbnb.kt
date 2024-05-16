@@ -1,8 +1,8 @@
 package com.ruki.tierbnb
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -33,6 +34,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.ui.BottomNavigation
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -45,14 +48,27 @@ import com.ruki.tierbnb.screens.MainScreen
 import com.ruki.tierbnb.ui.theme.BottomBarAnimationTheme
 import com.ruki.tierbnb.screens.LoadingScreen
 import com.ruki.tierbnb.ui.theme.LightBlue
+import java.util.Locale
+
+var cityName: String = ""
 
 @SuppressLint("MissingPermission")
 class MainActivity : ComponentActivity() {
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val permissions = arrayOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+        ActivityCompat.requestPermissions(this, permissions, 10)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContent {
             val db = Firebase.firestore
-
             val auth: FirebaseAuth = Firebase.auth
             val navController = rememberNavController()
 
@@ -68,13 +84,17 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            BottomBarAnimationApp(navController = navController, auth = auth)
+            BottomBarAnimationApp(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
         }
     }
 }
 
 @Composable
-fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth) {
+fun BottomBarAnimationApp(
+    navController: NavHostController,
+    auth: FirebaseAuth,
+    fusedLocationClient: FusedLocationProviderClient
+) {
     val bottomBarState = rememberSaveable { (mutableStateOf(true)) }
     val topBarState = rememberSaveable { (mutableStateOf(true)) }
 
@@ -128,7 +148,7 @@ fun BottomBarAnimationApp(navController: NavHostController, auth: FirebaseAuth) 
                         LoadingScreen()
                     }
                     composable(NavigationItem.HomeScreen.route) {
-                        MainScreen(navController = navController, auth = auth)
+                        MainScreen(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
                     }
                     composable(NavigationItem.Map.route) {
                     }
