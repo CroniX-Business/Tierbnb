@@ -38,6 +38,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     composeOptions {
@@ -76,5 +77,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.navigation.compose.v275)
     implementation(libs.accompanist.insets.ui)
+    implementation("com.google.maps.android:maps-compose:5.0.1")
     implementation(kotlin("reflect"))
 }

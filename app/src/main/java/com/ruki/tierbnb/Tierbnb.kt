@@ -42,11 +42,13 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import com.ruki.tierbnb.costume_modifier.topBorder
 import com.ruki.tierbnb.models.NavigationItem
+import com.ruki.tierbnb.screens.CarDetailsScreen
 import com.ruki.tierbnb.screens.LoginScreen
 import com.ruki.tierbnb.screens.RegisterScreen
 import com.ruki.tierbnb.screens.MainScreen
 import com.ruki.tierbnb.ui.theme.BottomBarAnimationTheme
 import com.ruki.tierbnb.screens.LoadingScreen
+import com.ruki.tierbnb.screens.MapScreen
 import com.ruki.tierbnb.ui.theme.LightBlue
 import java.util.Locale
 
@@ -151,6 +153,7 @@ fun BottomBarAnimationApp(
                         MainScreen(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
                     }
                     composable(NavigationItem.Map.route) {
+                        MapScreen(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
                     }
                     composable(NavigationItem.Profile.route) {
                     }
@@ -159,6 +162,12 @@ fun BottomBarAnimationApp(
                     }
                     composable("register_screen") {
                         RegisterScreen(navController = navController, auth = auth)
+                    }
+                    composable("car_details_screen/{carId}") { backStackEntry ->
+                        val carId = backStackEntry.arguments?.getString("carId")
+                        carId?.let {
+                            CarDetailsScreen(carId = it, navController = navController)
+                        }
                     }
                 }
             }

@@ -23,4 +23,12 @@ sealed class NavigationItem(var route: String, var icon: ImageVector, var title:
         icon = Icons.Outlined.Person,
         title = "Profile"
     )
+
+    object CarDetails : NavigationItem(
+        route = "car_details_screen/{carId}",
+        icon = Icons.Outlined.Person,
+        title = "Profile"
+    ) {
+        fun createRoute(carId: String) = "car_details_screen/$carId"
+    }
 }

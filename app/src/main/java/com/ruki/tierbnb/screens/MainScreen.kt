@@ -65,10 +65,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ruki.tierbnb.R
 import com.ruki.tierbnb.costume_modifier.bottomBorder
 import com.ruki.tierbnb.models.CarItems
+import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.ui.theme.GrayBackground
 import com.ruki.tierbnb.ui.theme.LightBlue
 import com.ruki.tierbnb.view_models.CarViewModel
-import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -162,6 +162,9 @@ fun MainScreen(
             .addOnFailureListener { exception: Exception ->
             }
 
+        println("Lat: ${userLatitude}")
+        println("Lon: ${userLongitude}")
+
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
@@ -223,7 +226,9 @@ fun MainScreen(
                 CarItem(
                     car = car,
                     isSelected = car.name == selectedCar,
-                    onCarSelected = { /*onCarSelected(car.name)*/ }
+                    onCarSelected = {
+                        navController.navigate(NavigationItem.CarDetails.createRoute(car.id))
+                    }
                 )
             }
         }
@@ -235,9 +240,6 @@ fun calculateDistanceInKm(
     latCar: Double, lonCar: Double
 ): Double {
     val radius = 6371
-
-    println("USER - Lat: ${latUser} - Long: ${lonUser}")
-    println("CAR - Lat: ${latCar} - Long: ${lonCar}")
 
     val dLat = Math.toRadians(latCar - latUser)
     val dLon = Math.toRadians(lonCar - lonUser)

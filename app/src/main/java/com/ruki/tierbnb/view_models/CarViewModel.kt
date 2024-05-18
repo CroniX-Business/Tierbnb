@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+// CarViewModel.kt
 class CarViewModel : ViewModel() {
 
     private val _cars = MutableStateFlow<List<Car>>(emptyList())
@@ -25,7 +26,9 @@ class CarViewModel : ViewModel() {
                 .get()
                 .addOnSuccessListener { result ->
                     val carList = result.map { document ->
-                        document.toObject(Car::class.java)
+                        val car = document.toObject(Car::class.java)
+                        car.id = document.id // Set the document ID
+                        car
                     }
                     _cars.value = carList
                 }
@@ -35,3 +38,4 @@ class CarViewModel : ViewModel() {
         }
     }
 }
+
