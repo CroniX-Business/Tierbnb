@@ -6,7 +6,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 
-sealed class NavigationItem(var route: String, var icon: ImageVector, var title: String) {
+sealed class NavigationItem(var route: String, var icon: ImageVector?, var title: String) {
     object HomeScreen : NavigationItem(
         route = "main_screen",
         icon = Icons.Outlined.Home,
@@ -26,9 +26,35 @@ sealed class NavigationItem(var route: String, var icon: ImageVector, var title:
 
     object CarDetails : NavigationItem(
         route = "car_details_screen/{carId}",
-        icon = Icons.Outlined.Person,
-        title = "Profile"
+        icon = null,
+        title = "com.ruki.tierbnb.models.Car Details"
     ) {
         fun createRoute(carId: String) = "car_details_screen/$carId"
+    }
+
+    object LoadingScreen : NavigationItem(
+        route = "loading_screen",
+        icon = null,
+        title = "Loading Screen"
+    )
+
+    object LoginScreen : NavigationItem(
+        route = "login_screen",
+        icon = null,
+        title = "Login Screen"
+    )
+
+    object RegisterScreen : NavigationItem(
+        route = "register_screen",
+        icon = null,
+        title = "Register Screen"
+    )
+
+    object CarReservation : NavigationItem(
+        route = "car_reservation/{carId}",
+        icon = null,
+        title = "com.ruki.tierbnb.models.Car reservation"
+    ) {
+        fun createRoute(carId: String) = "car_reservation/$carId"
     }
 }

@@ -1,14 +1,16 @@
 package com.ruki.tierbnb.view_models
 
-import Car
+import com.ruki.tierbnb.models.Car
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-// CarViewModel.kt
 class CarViewModel : ViewModel() {
 
     private val _cars = MutableStateFlow<List<Car>>(emptyList())
@@ -22,12 +24,54 @@ class CarViewModel : ViewModel() {
 
     private fun fetchCars() {
         viewModelScope.launch {
+            try {
+                val result = db.collection("cars").get().await()
+                val carList = result.map { document ->
+                    val car = document.toObject(Car::class.java).apply { id = document.id }
+                    car.transformedImages = transformImageUrls(car.images)
+                    car
+                }
+                _cars.value = carList
+                println("_Slike: ${_cars.value}")
+            } catch (e: Exception) {
+                // Handle the error
+            }
+        }
+    }
+
+    private suspend fun transformImageUrls(images: List<String>): List<String> {
+        return images.map { imageUrl ->
+            try {
+                val storageReference = Firebase.storage.getReferenceFromUrl(imageUrl)
+                val uri = storageReference.downloadUrl.await()
+                uri.toString()
+            } catch (e: Exception) {
+                // Handle the error
+                ""
+            }
+        }.filter { it.isNotEmpty() }
+    }
+}
+
+/*class CarViewModel : ViewModel() {
+
+    private val _cars = MutableStateFlow<List<com.ruki.tierbnb.models.Car>>(emptyList())
+    val cars: StateFlow<List<com.ruki.tierbnb.models.Car>> get() = _cars
+
+    private val db = FirebaseFirestore.getInstance()
+
+    init {
+        fetchCars()
+    }
+
+    private fun fetchCars() {
+        viewModelScope.launch {
             db.collection("cars")
                 .get()
                 .addOnSuccessListener { result ->
                     val carList = result.map { document ->
-                        val car = document.toObject(Car::class.java)
-                        car.id = document.id // Set the document ID
+                        val car = document.toObject(com.ruki.tierbnb.models.Car::class.java)
+                        car.id = document.id
                         car
                     }
                     _cars.value = carList
@@ -37,5 +81,4 @@ class CarViewModel : ViewModel() {
                 }
         }
     }
-}
-
+}*/

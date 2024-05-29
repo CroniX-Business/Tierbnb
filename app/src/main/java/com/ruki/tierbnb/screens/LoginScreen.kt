@@ -44,7 +44,7 @@ import com.ruki.tierbnb.services.login
 import com.ruki.tierbnb.ui.theme.LightBlue
 
 @Composable
-fun LoginScreen(navController: NavController, auth: FirebaseAuth,) {
+fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }

@@ -1,15 +1,15 @@
 package com.ruki.tierbnb
 
 import android.annotation.SuppressLint
-import android.location.Geocoder
-import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.DrawableRes
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -39,25 +40,26 @@ import com.google.android.gms.location.LocationServices
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
 import com.ruki.tierbnb.costume_modifier.topBorder
 import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.screens.CarDetailsScreen
+import com.ruki.tierbnb.screens.CarReservationScreen
 import com.ruki.tierbnb.screens.LoginScreen
 import com.ruki.tierbnb.screens.RegisterScreen
 import com.ruki.tierbnb.screens.MainScreen
 import com.ruki.tierbnb.ui.theme.BottomBarAnimationTheme
 import com.ruki.tierbnb.screens.LoadingScreen
 import com.ruki.tierbnb.screens.MapScreen
+import com.ruki.tierbnb.screens.ProfileScreen
 import com.ruki.tierbnb.ui.theme.LightBlue
-import java.util.Locale
-
-var cityName: String = ""
+import com.ruki.tierbnb.view_models.CarViewModel
+import kotlinx.coroutines.delay
 
 @SuppressLint("MissingPermission")
 class MainActivity : ComponentActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -70,12 +72,12 @@ class MainActivity : ComponentActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContent {
-            val db = Firebase.firestore
             val auth: FirebaseAuth = Firebase.auth
             val navController = rememberNavController()
+            val carViewModel: CarViewModel = viewModel()
 
             LaunchedEffect(key1 = auth.currentUser) {
-                //delay(3000)
+                delay(2500)
                 auth.currentUser?.let {
                     navController.navigate(NavigationItem.HomeScreen.route) {
                         popUpTo(navController.graph.startDestinationId)
@@ -86,42 +88,40 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            BottomBarAnimationApp(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
+            BottomBarAnimationApp(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient, carViewModel = carViewModel)
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomBarAnimationApp(
     navController: NavHostController,
     auth: FirebaseAuth,
-    fusedLocationClient: FusedLocationProviderClient
+    fusedLocationClient: FusedLocationProviderClient,
+    carViewModel: CarViewModel
 ) {
     val bottomBarState = rememberSaveable { (mutableStateOf(true)) }
-    val topBarState = rememberSaveable { (mutableStateOf(true)) }
 
     BottomBarAnimationTheme {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
 
         when (navBackStackEntry?.destination?.route) {
-            "main_screen" -> {
+            NavigationItem.HomeScreen.route -> {
                 bottomBarState.value = true
-                topBarState.value = true
             }
-            "map_screen" -> {
+            NavigationItem.Map.route -> {
                 bottomBarState.value = true
-                topBarState.value = false
             }
-            "profile_screen" -> {
+            NavigationItem.Profile.route -> {
                 bottomBarState.value = true
-                topBarState.value = false
             }
         }
 
         com.google.accompanist.insets.ui.Scaffold(
             bottomBar = {
                 val currentRoute = navController.currentBackStackEntry?.destination?.route
-                val shouldShowBottomBar = currentRoute in listOf("main_screen", "map_screen", "profile_screen")
+                val shouldShowBottomBar = currentRoute in listOf(NavigationItem.HomeScreen.route, NavigationItem.Map.route, NavigationItem.Profile.route)
 
                 if (shouldShowBottomBar) {
                     BottomBar(
@@ -130,43 +130,39 @@ fun BottomBarAnimationApp(
                         )
                 }
             },
-            /*topBar = {
-                // Determine visibility based on the current route
-                val shouldShowTopBar = navController.currentBackStackEntry?.destination?.route !in listOf("loading_screen", "login_screen", "register_screen")
-
-                if (shouldShowTopBar) {
-                    TopBar(
-                        navController = navController,
-                        topBarState = topBarState
-                    )
-                }
-            },*/
             content = {
                 NavHost(
                     navController = navController,
                     startDestination = "loading_screen",
                 ) {
-                    composable("loading_screen") {
+                    composable(NavigationItem.LoadingScreen.route) {
                         LoadingScreen()
                     }
                     composable(NavigationItem.HomeScreen.route) {
-                        MainScreen(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
+                        MainScreen(navController = navController, fusedLocationClient = fusedLocationClient, carViewModel = carViewModel)
                     }
                     composable(NavigationItem.Map.route) {
-                        MapScreen(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient)
+                        MapScreen(navController = navController, fusedLocationClient = fusedLocationClient)
                     }
                     composable(NavigationItem.Profile.route) {
+                        ProfileScreen(auth = auth)
                     }
-                    composable("login_screen") {
+                    composable(NavigationItem.LoginScreen.route) {
                         LoginScreen(navController = navController, auth = auth)
                     }
-                    composable("register_screen") {
+                    composable(NavigationItem.RegisterScreen.route) {
                         RegisterScreen(navController = navController, auth = auth)
                     }
-                    composable("car_details_screen/{carId}") { backStackEntry ->
+                    composable(NavigationItem.CarDetails.route) { backStackEntry ->
                         val carId = backStackEntry.arguments?.getString("carId")
                         carId?.let {
-                            CarDetailsScreen(carId = it, navController = navController)
+                            CarDetailsScreen(carId = it, navController = navController, carViewModel = carViewModel)
+                        }
+                    }
+                    composable(NavigationItem.CarReservation.route) { backStackEntry ->
+                        val carId = backStackEntry.arguments?.getString("carId")
+                        carId?.let {
+                            CarReservationScreen(carId = it, navController = navController, carViewModel = carViewModel, auth = auth)
                         }
                     }
                 }
@@ -185,8 +181,8 @@ fun BottomBar(navController: NavController, bottomBarState: MutableState<Boolean
 
     AnimatedVisibility(
         visible = bottomBarState.value,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it }),
+        enter = slideInHorizontally(initialOffsetX = { it }),
+        exit = slideOutHorizontally(targetOffsetX = { it }),
         content = {
             BottomNavigation{
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -197,9 +193,11 @@ fun BottomBar(navController: NavController, bottomBarState: MutableState<Boolean
 
                     BottomNavigationItem(
                         icon = {
-                            Icon(imageVector = item.icon,
-                                contentDescription = "",
-                                tint = if (selected) LightBlue else Color.Black)
+                            item.icon?.let {
+                                Icon(imageVector = it,
+                                    contentDescription = "",
+                                    tint = if (selected) LightBlue else Color.Black)
+                            }
                         },
                         label = { Text(text = item.title, color = if (selected) LightBlue else Color.Black) },
                         selected = selected,
@@ -216,33 +214,6 @@ fun BottomBar(navController: NavController, bottomBarState: MutableState<Boolean
         }
     )
 }
-
-/*@Composable
-fun TopBar(navController: NavController, topBarState: MutableState<Boolean>) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val title: String = when (currentRoute) {
-        "main_screen" -> "Cars"
-        "map_screen" -> "Map"
-        "profile_screen" -> "Profile"
-        else -> "Tierbnb"
-    }
-
-    AnimatedVisibility(
-        visible = topBarState.value,
-        //currentRoute in listOf("main_screen", "map_screen", "profile_screen"),
-        enter = slideInVertically(initialOffsetY = { -it }),
-        exit = slideOutVertically(targetOffsetY = { -it }),
-        content = {
-            TopAppBar(
-                modifier = Modifier
-                    .height(150.dp),
-                backgroundColor = Color.White,
-                title = { Text(text = title) },
-            )
-        }
-    )
-}*/
 
 @Composable
 fun BackgroundImage(modifier: Modifier, @DrawableRes imageResource: Int) {

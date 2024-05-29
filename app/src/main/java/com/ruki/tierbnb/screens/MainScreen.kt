@@ -1,11 +1,10 @@
 package com.ruki.tierbnb.screens
 
-import Car
+import com.ruki.tierbnb.models.Car
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,14 +31,19 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Divider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,17 +62,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.SubcomposeAsyncImage
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.firebase.auth.FirebaseAuth
-import com.ruki.tierbnb.R
 import com.ruki.tierbnb.costume_modifier.bottomBorder
 import com.ruki.tierbnb.models.CarItems
 import com.ruki.tierbnb.models.NavigationItem
-import com.ruki.tierbnb.ui.theme.GrayBackground
 import com.ruki.tierbnb.ui.theme.LightBlue
 import com.ruki.tierbnb.view_models.CarViewModel
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -79,22 +82,29 @@ import kotlin.math.sqrt
 @Composable
 fun MainScreen(
     navController: NavController,
-    auth: FirebaseAuth,
-    fusedLocationClient: FusedLocationProviderClient
+    fusedLocationClient: FusedLocationProviderClient,
+    carViewModel: CarViewModel
 ) {
     var selectedOption by remember { mutableStateOf("Near") }
-    var selectedCar by remember { mutableStateOf("") }
     var cityName by remember { mutableStateOf("Unknown") }
-    var userLatitude by remember { mutableStateOf(0.0) }
-    var userLongitude by remember { mutableStateOf(0.0) }
+    var userLatitude by remember { mutableDoubleStateOf(0.0) }
+    var userLongitude by remember { mutableDoubleStateOf(0.0) }
+    var searchQuery by remember { mutableStateOf("") }
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
+    var showDialog by remember { mutableStateOf(false) }
+
+    val maxDistanceInKm = 50.0
+
+    var distanceValue by remember { mutableDoubleStateOf(maxDistanceInKm) }
+    var newDistanceValue by remember { mutableDoubleStateOf(maxDistanceInKm) }
+
+    val cars by carViewModel.cars.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .height(screenHeight - 55.dp)
-            .background(GrayBackground)
     ) {
         Box(
             modifier = Modifier
@@ -110,7 +120,7 @@ fun MainScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SearchBar(onSearch = { query ->
-                    // searchViewModel.performSearch(query)
+                    searchQuery = query
                 })
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -124,9 +134,9 @@ fun MainScreen(
             }
         }
 
-        Divider(
-            color = Color.Gray,
-            thickness = 2.dp
+        HorizontalDivider(
+            thickness = 2.dp,
+            color = Color.Gray
         )
 
         val context = LocalContext.current
@@ -152,18 +162,15 @@ fun MainScreen(
 
                     if (addresses != null) {
                         if (addresses.isNotEmpty()) {
-                            val address = addresses.get(0)
+                            val address = addresses[0]
                             cityName = address.locality
 
                         }
                     }
                 }
             }
-            .addOnFailureListener { exception: Exception ->
+            .addOnFailureListener {
             }
-
-        println("Lat: ${userLatitude}")
-        println("Lon: ${userLongitude}")
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,7 +182,7 @@ fun MainScreen(
                 Text(
                     modifier = Modifier
                         .height(50.dp)
-                        .width(130.dp)
+                        .width(180.dp)
                         .wrapContentHeight()
                         .border(
                             width = 2.dp,
@@ -184,7 +191,7 @@ fun MainScreen(
                         )
                         .clip(RoundedCornerShape(20))
                         .background(Color.LightGray),
-                    text = cityName,
+                    text = "$cityName +${BigDecimal(distanceValue).setScale(1, RoundingMode.HALF_UP)}km",
                     fontSize = 13.sp,
                     color = Color.Black,
                     textAlign = TextAlign.Center
@@ -192,26 +199,66 @@ fun MainScreen(
             }
 
             IconButton(
-                onClick = { /* do something */ },
+                onClick = { showDialog = true },
             ) {
                 Icon(Icons.Outlined.Settings, contentDescription = "Filter")
             }
+
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = {
+                        showDialog = false
+                        distanceValue = newDistanceValue
+                    },
+                    title = { Text(text = "Change Distance") },
+                    text = {
+                        Slider(
+                            value = newDistanceValue.toFloat(),
+                            onValueChange = { value ->
+                                newDistanceValue = value.toDouble()
+                            },
+                            valueRange = 1f..500f,
+                            steps = 10,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        Text(text = BigDecimal(newDistanceValue).setScale(1, RoundingMode.HALF_UP).toString())
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showDialog = false
+                                distanceValue = newDistanceValue
+                            }
+                        ) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        Button(
+                            onClick = {
+                                showDialog = false
+                                newDistanceValue = distanceValue
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
         }
-
-        val carViewModel: CarViewModel = viewModel()
-        val cars by carViewModel.cars.collectAsState()
-
-        val maxDistanceInKm = 50.0
 
         val filteredCars = cars.filter { car ->
             when (selectedOption) {
+                "All" -> {
+                    searchQuery.isEmpty() || (car.type.contains(searchQuery, ignoreCase = true) || car.name.contains(searchQuery, ignoreCase = true))
+                }
                 "Near" -> {
                     val carLatitude = car.latitude
                     val carLongitude = car.longitude
                     val distance = calculateDistanceInKm(userLatitude, userLongitude, carLatitude, carLongitude)
-                    distance <= maxDistanceInKm
+                    distance <= distanceValue
                 }
-                "Luxury" -> car.luxury == true
+                "Luxury" -> car.luxury
                 else -> car.type == selectedOption
             }
         }
@@ -222,10 +269,9 @@ fun MainScreen(
                 .fillMaxHeight()
                 .padding(horizontal = 16.dp)
         ) {
-            itemsIndexed(filteredCars) { index, car ->
+            itemsIndexed(filteredCars) { _, car ->
                 CarItem(
                     car = car,
-                    isSelected = car.name == selectedCar,
                     onCarSelected = {
                         navController.navigate(NavigationItem.CarDetails.createRoute(car.id))
                     }
@@ -316,9 +362,10 @@ fun SliderNavigationBar(
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
 ) {
-    val options = CarItems::class.sealedSubclasses.mapNotNull { subclass ->
+    val getOptions = CarItems::class.sealedSubclasses.mapNotNull { subclass ->
         subclass.objectInstance
     }
+    val options = getOptions.sortedBy { it.order }
 
     Column(
         modifier = Modifier
@@ -330,7 +377,7 @@ fun SliderNavigationBar(
                 .fillMaxWidth()
                 .height(55.dp),
         ) {
-            itemsIndexed(options.reversed()) { index, option ->
+            itemsIndexed(options) { _, option ->
                 OptionItem(
                     option = option,
                     isSelected = option.name == selectedOption,
@@ -376,7 +423,7 @@ fun OptionItem(
     }
 }
 
-@Composable
+/*@Composable
 fun SliderCars(
     selectedCar: String,
     onCarSelected: (String) -> Unit,
@@ -397,12 +444,11 @@ fun SliderCars(
             )
         }
     }
-}
+}*/
 
 @Composable
 fun CarItem(
     car: Car,
-    isSelected: Boolean,
     onCarSelected: () -> Unit
 ) {
 
@@ -417,9 +463,9 @@ fun CarItem(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top
         ) {
-            // Replace with AsyncImage or CoilImage to load from URL
-            Image(
-                painter = painterResource(id = R.drawable.login_background),
+            SubcomposeAsyncImage(
+                model = car.transformedImages[0],
+                contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
@@ -430,7 +476,20 @@ fun CarItem(
                     )
                     .clip(RoundedCornerShape(15.dp)),
                 contentScale = ContentScale.Crop,
-                contentDescription = ""
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(80.dp, 80.dp),
+                            color = LightBlue
+                        )
+                    }
+                },
             )
         }
         Row(
@@ -452,7 +511,11 @@ fun CarItem(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Day - ${car.price} | Month - ${car.price}",
+                    text = buildString {
+                        val dailyPriceDouble = car.dailyPrice.toIntOrNull() ?: 0
+                        val monthlyPrice = dailyPriceDouble * 30
+                        append("Day - ${car.dailyPrice}€ | Month - ${monthlyPrice}€")
+                    },
                     textAlign = TextAlign.Start,
                     color = Color.Gray,
                     fontSize = 18.sp,
@@ -462,73 +525,3 @@ fun CarItem(
         }
     }
 }
-    /*Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(270.dp)
-            .clickable(onClick = onCarSelected)
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Image(
-                modifier = Modifier
-                    .border(width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(30.dp))
-                    .clip(RoundedCornerShape(30.dp)),
-                painter = painterResource(id = R.drawable.login_background),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
-            Spacer(modifier = Modifier.height(8.dp)) // Add some spacing between the image and the text
-            Text(
-                modifier = Modifier
-                    .,
-                text = "Auto",
-                color = Color.Black,
-                fontSize = 15.sp
-            )
-        }
-    }*/
-
-    /*Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(270.dp)
-            .clickable(onClick = onCarSelected)
-            .padding(vertical = 16.dp)
-        ,
-    ) {
-        Image(
-            modifier = Modifier
-                .border(width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(30.dp))
-                .clip(RoundedCornerShape(30.dp)),
-            painter = painterResource(id = R.drawable.login_background),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-        )
-        Text(
-            modifier = Modifier.padding(top = 2.dp),
-            text = car.name,
-            fontSize = 15.sp
-        )
-    }*/
-
-/*suspend fun getAllCarIds(): List<String> {
-    val firestore = FirebaseFirestore.getInstance()
-    val carsCollection = firestore.collection("cars")
-
-    return try {
-        val querySnapshot = carsCollection.get().await()
-        val carIds = mutableListOf<String>()
-
-        for (document in querySnapshot.documents) {
-            carIds.add(document.id)
-        }
-        carIds
-    } catch (e: Exception) {
-        // Handle any errors here
-        emptyList() // Return an empty list if there's an error
-    }
-}*/

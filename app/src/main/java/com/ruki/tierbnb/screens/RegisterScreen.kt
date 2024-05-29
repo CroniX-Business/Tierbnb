@@ -35,16 +35,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.auth
 import com.ruki.tierbnb.BackgroundImage
 import com.ruki.tierbnb.R
 import com.ruki.tierbnb.services.register
 import com.ruki.tierbnb.ui.theme.LightBlue
 
 @Composable
-fun RegisterScreen(navController: NavController, auth: FirebaseAuth,) {
+fun RegisterScreen(navController: NavController, auth: FirebaseAuth) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordRep by remember { mutableStateOf("") }
