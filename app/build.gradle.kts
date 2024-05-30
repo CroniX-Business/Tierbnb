@@ -83,4 +83,5 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(libs.coil.compose)
     implementation("com.firebaseui:firebase-ui-storage:7.2.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.31.1-alpha")
 }

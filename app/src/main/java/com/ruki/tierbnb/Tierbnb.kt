@@ -1,6 +1,9 @@
 package com.ruki.tierbnb
 
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -62,6 +65,15 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val notificationChannel = NotificationChannel(
+            "notification_channel_id",
+            "Notification name",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(notificationChannel)
 
         val permissions = arrayOf(
             android.Manifest.permission.ACCESS_FINE_LOCATION,

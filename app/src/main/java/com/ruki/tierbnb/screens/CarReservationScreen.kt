@@ -1,5 +1,6 @@
 package com.ruki.tierbnb.screens
 
+import android.Manifest
 import com.ruki.tierbnb.models.Car
 import android.app.DatePickerDialog
 import android.os.Build
@@ -39,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,8 +61,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.firebase.auth.FirebaseAuth
 import com.ruki.tierbnb.R
+import com.ruki.tierbnb.components.NotificationHandler
 import com.ruki.tierbnb.components.showToast
 import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.ui.theme.GrayBackground
@@ -71,7 +77,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CarReservationScreen(
@@ -80,6 +86,17 @@ fun CarReservationScreen(
     carViewModel: CarViewModel,
     auth: FirebaseAuth
 ) {
+    val context = LocalContext.current
+
+    val postNotificationPermission = rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+    val notificationHandler = NotificationHandler(context)
+
+    LaunchedEffect(key1 = true) {
+        if (!postNotificationPermission.status.isGranted) {
+            postNotificationPermission.launchPermissionRequest()
+        }
+    }
+
     val user = auth.currentUser
 
     println("Broj: $user")
@@ -93,12 +110,12 @@ fun CarReservationScreen(
 
     var firstDateSelected by remember { mutableStateOf("") }
     var lastDateSelected by remember { mutableStateOf("") }
+    var fullPrice by remember { mutableStateOf("") }
 
     var name by remember { mutableStateOf("") }
     var surname by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf(user?.phoneNumber ?: "") }
 
-    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
     val countries = Locale.getISOCountries().map { code ->
         Locale("", code).displayCountry
@@ -395,8 +412,10 @@ fun CarReservationScreen(
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
 
+                            fullPrice = priceCalculator(firstDateSelected, lastDateSelected, it.dailyPrice, checkedCasco, cascoPrice)
+
                             Text(
-                                text = "Ukupna cijena: ${priceCalculator(firstDateSelected, lastDateSelected, it.dailyPrice, checkedCasco, cascoPrice)}",
+                                text = "Ukupna cijena: $fullPrice",
                                 modifier = Modifier
                                     .padding(start = 8.dp, bottom = 20.dp)
                                     .align(Alignment.CenterHorizontally),
@@ -415,9 +434,15 @@ fun CarReservationScreen(
                                 ) {
                                     Button(
                                         onClick = {
-                                            /*TODO*/
+                                            notificationHandler.showSimpleNotification(it, firstDateSelected, lastDateSelected, fullPrice)
                                         },
-                                        enabled = olderThen && name.isNotEmpty() && surname.isNotEmpty() && phoneNumber.isNotEmpty() && selectedCountry.isNotEmpty(),
+                                        enabled = olderThen
+                                                && name.isNotEmpty()
+                                                && surname.isNotEmpty()
+                                                && phoneNumber.isNotEmpty()
+                                                && selectedCountry.isNotEmpty()
+                                                && firstDateSelected.isNotEmpty()
+                                                && lastDateSelected.isNotEmpty(),
                                         modifier = Modifier
                                             .padding(16.dp)
                                             .width(300.dp)
@@ -525,16 +550,8 @@ fun priceCalculator(
         ChronoUnit.DAYS.between(firstDate, lastDate).toInt() + 1
     }.getOrDefault(0)
 
-    val totalPrice = (daysBetween * dailyPrice.toIntOrNull()!!) + (if (checkedCasco) cascoPrice else dailyPrice.toIntOrNull())!!
+    val totalPrice = (daysBetween * dailyPrice.toIntOrNull()!!) + (if (checkedCasco) cascoPrice else 0)
 
 
     return totalPrice.toString()
-
-    // Other UI elements for selecting dates and checkbox
-    // You might have a date picker and a checkbox like:
-    // DatePicker(firstDateSelected) { firstDateSelected = it }
-    // DatePicker(lastDateSelected) { lastDateSelected = it }
-    // Checkbox(checked = checkedCasco, onCheckedChange = { checkedCasco = it })
 }
-
-
