@@ -51,6 +51,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -196,12 +198,12 @@ fun MainScreen(
                     color = Color.Black,
                     textAlign = TextAlign.Center
                 )
-            }
 
-            IconButton(
-                onClick = { showDialog = true },
-            ) {
-                Icon(Icons.Outlined.Settings, contentDescription = "Filter")
+                IconButton(
+                    onClick = { showDialog = true },
+                ) {
+                    Icon(Icons.Outlined.Settings, contentDescription = "Filter")
+                }
             }
 
             if (showDialog) {
@@ -451,11 +453,10 @@ fun CarItem(
     car: Car,
     onCarSelected: () -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp)
+            .height(if (car.reserved) 350.dp else 320.dp)
             .padding(top = 10.dp)
             .clickable(onClick = onCarSelected)
     ) {
@@ -466,6 +467,11 @@ fun CarItem(
             SubcomposeAsyncImage(
                 model = car.transformedImages[0],
                 contentDescription = null,
+                colorFilter = if (car.reserved) {
+                    ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                } else {
+                    null
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
@@ -501,7 +507,9 @@ fun CarItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 5.dp),
+                    .padding(
+                        bottom = 5.dp,
+                    )
             ) {
                 Text(
                     text = "${car.type} ${car.name} | ${car.year}",
@@ -520,7 +528,15 @@ fun CarItem(
                     color = Color.Gray,
                     fontSize = 18.sp,
                 )
-                // Add other car details if needed
+                if(car.reserved) {
+                    Text(
+                        text = "REZERVIRANO",
+                        textAlign = TextAlign.Start,
+                        color = Color.Red,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
         }
     }

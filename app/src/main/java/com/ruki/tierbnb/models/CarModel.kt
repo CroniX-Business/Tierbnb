@@ -5,6 +5,7 @@ data class Car(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     var luxury: Boolean = false,
+    var reserved: Boolean = false,
     val name: String = "",
     val dailyPrice: String = "",
     val type: String = "",

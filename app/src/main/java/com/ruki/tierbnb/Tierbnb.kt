@@ -3,7 +3,6 @@ package com.ruki.tierbnb
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -56,6 +55,7 @@ import com.ruki.tierbnb.screens.MapScreen
 import com.ruki.tierbnb.screens.ProfileScreen
 import com.ruki.tierbnb.ui.theme.LightBlue
 import com.ruki.tierbnb.view_models.CarViewModel
+import com.ruki.tierbnb.view_models.UserViewModel
 import kotlinx.coroutines.delay
 
 @SuppressLint("MissingPermission")
@@ -87,6 +87,7 @@ class MainActivity : ComponentActivity() {
             val auth: FirebaseAuth = Firebase.auth
             val navController = rememberNavController()
             val carViewModel: CarViewModel = viewModel()
+            val userViewModel: UserViewModel = viewModel()
 
             LaunchedEffect(key1 = auth.currentUser) {
                 delay(2500)
@@ -100,7 +101,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            BottomBarAnimationApp(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient, carViewModel = carViewModel)
+            BottomBarAnimationApp(navController = navController, auth = auth, fusedLocationClient = fusedLocationClient, carViewModel = carViewModel, userViewModel = userViewModel)
         }
     }
 }
@@ -111,7 +112,8 @@ fun BottomBarAnimationApp(
     navController: NavHostController,
     auth: FirebaseAuth,
     fusedLocationClient: FusedLocationProviderClient,
-    carViewModel: CarViewModel
+    carViewModel: CarViewModel,
+    userViewModel: UserViewModel
 ) {
     val bottomBarState = rememberSaveable { (mutableStateOf(true)) }
 
@@ -157,7 +159,7 @@ fun BottomBarAnimationApp(
                         MapScreen(navController = navController, fusedLocationClient = fusedLocationClient)
                     }
                     composable(NavigationItem.Profile.route) {
-                        ProfileScreen(auth = auth)
+                        ProfileScreen(navController = navController, auth = auth, userViewModel = userViewModel, carViewModel = carViewModel,)
                     }
                     composable(NavigationItem.LoginScreen.route) {
                         LoginScreen(navController = navController, auth = auth)
@@ -174,7 +176,7 @@ fun BottomBarAnimationApp(
                     composable(NavigationItem.CarReservation.route) { backStackEntry ->
                         val carId = backStackEntry.arguments?.getString("carId")
                         carId?.let {
-                            CarReservationScreen(carId = it, navController = navController, carViewModel = carViewModel, auth = auth)
+                            CarReservationScreen(carId = it, navController = navController, carViewModel = carViewModel, auth = auth, userViewModel = userViewModel)
                         }
                     }
                 }

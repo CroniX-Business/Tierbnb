@@ -22,7 +22,7 @@ class CarViewModel : ViewModel() {
         fetchCars()
     }
 
-    private fun fetchCars() {
+    fun fetchCars() {
         viewModelScope.launch {
             try {
                 val result = db.collection("cars").get().await()
@@ -32,9 +32,7 @@ class CarViewModel : ViewModel() {
                     car
                 }
                 _cars.value = carList
-                println("_Slike: ${_cars.value}")
-            } catch (e: Exception) {
-                // Handle the error
+            } catch (_: Exception) {
             }
         }
     }
@@ -46,7 +44,6 @@ class CarViewModel : ViewModel() {
                 val uri = storageReference.downloadUrl.await()
                 uri.toString()
             } catch (e: Exception) {
-                // Handle the error
                 ""
             }
         }.filter { it.isNotEmpty() }

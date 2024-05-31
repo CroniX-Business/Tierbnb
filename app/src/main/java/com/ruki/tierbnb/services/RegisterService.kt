@@ -34,7 +34,7 @@ fun register(
             if (task.isSuccessful) {
                 val user = auth.currentUser
                 user?.let { firebaseUser ->
-                    createFirestoreCollectionForUser(firebaseUser)
+                    createFirestoreCollectionForUser(firebaseUser, password)
                 }
                 navController.navigate(NavigationItem.HomeScreen.route) {
                     popUpTo(navController.graph.startDestinationId)
@@ -54,13 +54,19 @@ fun register(
         }
 }
 
-private fun createFirestoreCollectionForUser(user: FirebaseUser) {
+private fun createFirestoreCollectionForUser(user: FirebaseUser, password: String) {
     val db = FirebaseFirestore.getInstance()
     val atIndex = user.email?.indexOf('@')
     val userCollection = db.collection("users")
     val userData = hashMapOf(
         "email" to user.email,
-        "name" to atIndex?.let { user.email?.substring(0, it) }
+        "password" to password,
+        "name" to atIndex?.let { user.email?.substring(0, it) },
+        "reservedCar" to hashMapOf(
+            "carId" to "",
+            "firstDate" to "",
+            "lastDate" to ""
+        )
     )
 
     userCollection.document(user.uid)

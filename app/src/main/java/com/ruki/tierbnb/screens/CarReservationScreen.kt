@@ -3,7 +3,9 @@ package com.ruki.tierbnb.screens
 import android.Manifest
 import com.ruki.tierbnb.models.Car
 import android.app.DatePickerDialog
+import android.content.ContentValues.TAG
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,6 +67,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.ruki.tierbnb.R
 import com.ruki.tierbnb.components.NotificationHandler
 import com.ruki.tierbnb.components.showToast
@@ -72,6 +75,7 @@ import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.ui.theme.GrayBackground
 import com.ruki.tierbnb.ui.theme.LightBlue
 import com.ruki.tierbnb.view_models.CarViewModel
+import com.ruki.tierbnb.view_models.UserViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -84,7 +88,8 @@ fun CarReservationScreen(
     carId: String,
     navController: NavController,
     carViewModel: CarViewModel,
-    auth: FirebaseAuth
+    auth: FirebaseAuth,
+    userViewModel: UserViewModel
 ) {
     val context = LocalContext.current
 
@@ -97,9 +102,7 @@ fun CarReservationScreen(
         }
     }
 
-    val user = auth.currentUser
-
-    println("Broj: $user")
+    val userAuth = auth.currentUser
 
     var car by remember { mutableStateOf<Car?>(null) }
 
@@ -114,7 +117,7 @@ fun CarReservationScreen(
 
     var name by remember { mutableStateOf("") }
     var surname by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf(user?.phoneNumber ?: "") }
+    var phoneNumber by remember { mutableStateOf(userAuth?.phoneNumber ?: "") }
 
     var expanded by remember { mutableStateOf(false) }
     val countries = Locale.getISOCountries().map { code ->
@@ -123,6 +126,7 @@ fun CarReservationScreen(
     var selectedCountry by remember { mutableStateOf(countries[0]) }
 
     val cars by carViewModel.cars.collectAsState()
+    val user by userViewModel.user.collectAsState()
 
     car = cars.find { it.id == carId }
 
@@ -417,11 +421,21 @@ fun CarReservationScreen(
                             Text(
                                 text = "Ukupna cijena: $fullPrice",
                                 modifier = Modifier
-                                    .padding(start = 8.dp, bottom = 20.dp)
+                                    .padding(start = 8.dp, bottom = 5.dp)
                                     .align(Alignment.CenterHorizontally),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold
                             )
+
+                            if(user?.reservedCar != null) {
+                                Text(
+                                    color = Color.Red,
+                                    modifier = Modifier
+                                        .padding(start = 4.dp, bottom = 2.dp)
+                                        .align(Alignment.CenterHorizontally),
+                                    text = "Već ste rezervirali auto"
+                                )
+                            }
 
 
                             Row(
@@ -434,7 +448,18 @@ fun CarReservationScreen(
                                 ) {
                                     Button(
                                         onClick = {
-                                            notificationHandler.showSimpleNotification(it, firstDateSelected, lastDateSelected, fullPrice)
+                                            updateReservation(it, auth, firstDateSelected, lastDateSelected, true, carViewModel) { success ->
+                                                if (success) {
+                                                    notificationHandler.showSimpleNotification(it, firstDateSelected, lastDateSelected, fullPrice)
+
+
+                                                    navController.navigate(NavigationItem.HomeScreen.route) {
+                                                        popUpTo(navController.graph.startDestinationId)
+                                                    }
+                                                } else {
+                                                    showToast(context,"Ne uspjela rezervacija")
+                                                }
+                                            }
                                         },
                                         enabled = olderThen
                                                 && name.isNotEmpty()
@@ -442,7 +467,8 @@ fun CarReservationScreen(
                                                 && phoneNumber.isNotEmpty()
                                                 && selectedCountry.isNotEmpty()
                                                 && firstDateSelected.isNotEmpty()
-                                                && lastDateSelected.isNotEmpty(),
+                                                && lastDateSelected.isNotEmpty()
+                                                && user?.reservedCar == null,
                                         modifier = Modifier
                                             .padding(16.dp)
                                             .width(300.dp)
@@ -480,6 +506,50 @@ fun CarReservationScreen(
         }
     }
 }
+
+fun updateReservation(
+    it: Car,
+    auth: FirebaseAuth,
+    firstDateSelected: String,
+    lastDateSelected: String,
+    reserved: Boolean,
+    carViewModel: CarViewModel,
+    callback: (Boolean) -> Unit
+) {
+    val db = FirebaseFirestore.getInstance()
+    val userAuth = auth.currentUser
+
+    val carRef = db.collection("cars").document(it.id)
+    val userRef = userAuth?.let {
+        it1 -> db.collection("users").document(it1.uid)
+    }
+
+    if (userRef == null) {
+        callback(false)
+        return
+    }
+
+    val batch = db.batch()
+    batch.update(carRef, "reserved", reserved)
+    batch.update(userRef, "reservedCar", mapOf(
+        "carId" to it.id,
+        "firstDate" to firstDateSelected,
+        "lastDate" to lastDateSelected
+    ))
+
+    batch.commit()
+        .addOnSuccessListener {
+            Log.d(TAG, "Batch update successful!")
+            carViewModel.fetchCars()
+            callback(true)
+        }
+        .addOnFailureListener { e ->
+            Log.w(TAG, "Batch update failed", e)
+            callback(false)
+        }
+}
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

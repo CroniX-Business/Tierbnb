@@ -315,7 +315,11 @@ fun CarDetailsScreen(carId: String, navController: NavController, carViewModel: 
                                     .width(300.dp)
                                     .height(50.dp),
                                 shape = RoundedCornerShape(15.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = LightBlue, contentColor = Color.White)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = LightBlue,
+                                    contentColor = Color.White,
+                                    disabledContainerColor = Color.Gray),
+                                enabled = !it.reserved
                             ) {
                                 Text(
                                     color = Color.Black,
