@@ -42,9 +42,16 @@ import com.ruki.tierbnb.BackgroundImage
 import com.ruki.tierbnb.R
 import com.ruki.tierbnb.services.login
 import com.ruki.tierbnb.ui.theme.LightBlue
+import com.ruki.tierbnb.view_models.CarViewModel
+import com.ruki.tierbnb.view_models.UserViewModel
 
 @Composable
-fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
+fun LoginScreen(
+    navController: NavController,
+    auth: FirebaseAuth,
+    userViewModel: UserViewModel,
+    carViewModel: CarViewModel
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -104,7 +111,7 @@ fun LoginScreen(navController: NavController, auth: FirebaseAuth) {
             )
             Button(
                 onClick = {
-                    login(email, password, auth, navController, context)
+                    login(email, password, auth, navController, userViewModel, carViewModel, context)
                 },
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)

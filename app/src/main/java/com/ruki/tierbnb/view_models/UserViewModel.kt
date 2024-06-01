@@ -22,7 +22,7 @@ class UserViewModel : ViewModel() {
         fetchUser()
     }
 
-    private fun fetchUser() {
+    fun fetchUser() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
             viewModelScope.launch {

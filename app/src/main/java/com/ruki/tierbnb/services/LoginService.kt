@@ -7,12 +7,16 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.ruki.tierbnb.components.showToast
+import com.ruki.tierbnb.view_models.CarViewModel
+import com.ruki.tierbnb.view_models.UserViewModel
 
 fun login(
     email: String,
     password: String,
     auth: FirebaseAuth,
     navController: NavController,
+    userViewModel: UserViewModel,
+    carViewModel: CarViewModel,
     context: Context,
 ) {
     if (email.isEmpty() || password.isEmpty()) {
@@ -23,6 +27,8 @@ fun login(
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
+                userViewModel.fetchUser()
+                carViewModel.fetchCars()
                 navController.navigate("main_screen") {
                     popUpTo(navController.graph.startDestinationId)
                 }

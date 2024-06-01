@@ -159,10 +159,10 @@ fun BottomBarAnimationApp(
                         MapScreen(navController = navController, fusedLocationClient = fusedLocationClient)
                     }
                     composable(NavigationItem.Profile.route) {
-                        ProfileScreen(navController = navController, auth = auth, userViewModel = userViewModel, carViewModel = carViewModel,)
+                        ProfileScreen(navController = navController, auth = auth, userViewModel = userViewModel, carViewModel = carViewModel)
                     }
                     composable(NavigationItem.LoginScreen.route) {
-                        LoginScreen(navController = navController, auth = auth)
+                        LoginScreen(navController = navController, auth = auth, userViewModel = userViewModel, carViewModel = carViewModel)
                     }
                     composable(NavigationItem.RegisterScreen.route) {
                         RegisterScreen(navController = navController, auth = auth)

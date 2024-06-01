@@ -36,7 +36,7 @@ fun register(
                 user?.let { firebaseUser ->
                     createFirestoreCollectionForUser(firebaseUser, password)
                 }
-                navController.navigate(NavigationItem.HomeScreen.route) {
+                navController.navigate(NavigationItem.LoginScreen.route) {
                     popUpTo(navController.graph.startDestinationId)
                 }
             } else {
@@ -47,7 +47,7 @@ fun register(
                     else -> "Registracija neuspješna. Pokušajte ponovo."
                 }
                 showToast(context, errorText)
-                navController.navigate("register_screen") {
+                navController.navigate(NavigationItem.RegisterScreen.route) {
                     popUpTo(navController.graph.startDestinationId)
                 }
             }
