@@ -30,7 +30,6 @@ class UserViewModel : ViewModel() {
                     val uid = currentUser.uid
                     val document = db.collection("users").document(uid).get().await()
                     val user = document.toObject(User::class.java)
-                    println("PEDER: ${document.toObject(User::class.java)}")
                     user?.let {
                         _user.value = it.copy(id = uid)
                     }

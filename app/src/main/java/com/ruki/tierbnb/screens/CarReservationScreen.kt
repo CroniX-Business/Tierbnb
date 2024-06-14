@@ -5,6 +5,7 @@ import com.ruki.tierbnb.models.Car
 import android.app.DatePickerDialog
 import android.content.ContentValues.TAG
 import android.os.Build
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -82,7 +83,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(TIRAMISU)
 @Composable
 fun CarReservationScreen(
     carId: String,
@@ -120,6 +121,7 @@ fun CarReservationScreen(
     var phoneNumber by remember { mutableStateOf(userAuth?.phoneNumber ?: "") }
 
     var expanded by remember { mutableStateOf(false) }
+
     val countries = Locale.getISOCountries().map { code ->
         Locale("", code).displayCountry
     }.sorted()
@@ -427,7 +429,7 @@ fun CarReservationScreen(
                                 fontWeight = FontWeight.ExtraBold
                             )
 
-                            if(user?.reservedCar != null) {
+                            if(user?.reservedCar?.carId != "") {
                                 Text(
                                     color = Color.Red,
                                     modifier = Modifier
@@ -468,7 +470,7 @@ fun CarReservationScreen(
                                                 && selectedCountry.isNotEmpty()
                                                 && firstDateSelected.isNotEmpty()
                                                 && lastDateSelected.isNotEmpty()
-                                                && user?.reservedCar == null,
+                                                && user?.reservedCar?.carId == "",
                                         modifier = Modifier
                                             .padding(16.dp)
                                             .width(300.dp)

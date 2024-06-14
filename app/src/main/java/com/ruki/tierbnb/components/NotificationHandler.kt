@@ -21,7 +21,7 @@ class NotificationHandler(private val context: Context) {
             .setContentTitle("Auto Rezervacija")
             .setContentText("Zatražena rezervacija ${car.type} ${car.name}")
             .setStyle(NotificationCompat.BigTextStyle()
-                .bigText("Početak: ${firstDateSelected}\nKraj: ${lastDateSelected}\nUkupna cijena: ${price}"))
+                .bigText("Početak: ${firstDateSelected}\nKraj: ${lastDateSelected}\nUkupna cijena: ${price}€"))
             .setSmallIcon(R.drawable.tierbnb_logo)
             .setPriority(NotificationManager.IMPORTANCE_HIGH)
             .setAutoCancel(true)

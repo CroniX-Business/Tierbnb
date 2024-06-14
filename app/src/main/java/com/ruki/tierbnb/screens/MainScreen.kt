@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,8 +73,6 @@ import com.ruki.tierbnb.models.CarItems
 import com.ruki.tierbnb.models.NavigationItem
 import com.ruki.tierbnb.ui.theme.LightBlue
 import com.ruki.tierbnb.view_models.CarViewModel
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -96,10 +95,10 @@ fun MainScreen(
     val screenHeight = configuration.screenHeightDp.dp
     var showDialog by remember { mutableStateOf(false) }
 
-    val maxDistanceInKm = 50.0
+    val maxDistanceInKm = 40
 
-    var distanceValue by remember { mutableDoubleStateOf(maxDistanceInKm) }
-    var newDistanceValue by remember { mutableDoubleStateOf(maxDistanceInKm) }
+    var distanceValue by remember { mutableIntStateOf(maxDistanceInKm) }
+    var newDistanceValue by remember { mutableIntStateOf(maxDistanceInKm) }
 
     val cars by carViewModel.cars.collectAsState()
 
@@ -166,7 +165,6 @@ fun MainScreen(
                         if (addresses.isNotEmpty()) {
                             val address = addresses[0]
                             cityName = address.locality
-
                         }
                     }
                 }
@@ -193,7 +191,7 @@ fun MainScreen(
                         )
                         .clip(RoundedCornerShape(20))
                         .background(Color.LightGray),
-                    text = "$cityName +${BigDecimal(distanceValue).setScale(1, RoundingMode.HALF_UP)}km",
+                    text = "$cityName +$distanceValue km",
                     fontSize = 13.sp,
                     color = Color.Black,
                     textAlign = TextAlign.Center
@@ -215,15 +213,15 @@ fun MainScreen(
                     title = { Text(text = "Change Distance") },
                     text = {
                         Slider(
-                            value = newDistanceValue.toFloat(),
+                            value = newDistanceValue.toFloat() / 20,
                             onValueChange = { value ->
-                                newDistanceValue = value.toDouble()
+                                newDistanceValue = (value * 20).toInt()
                             },
-                            valueRange = 1f..500f,
-                            steps = 10,
+                            valueRange = 0f..25f,
+                            steps = 24,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
-                        Text(text = BigDecimal(newDistanceValue).setScale(1, RoundingMode.HALF_UP).toString())
+                        Text(text = newDistanceValue.toString())
                     },
                     confirmButton = {
                         Button(
@@ -353,7 +351,7 @@ fun SearchBar(onSearch: (String) -> Unit) {
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .padding(vertical = 8.dp) // Adjust padding as needed
+                    .padding(vertical = 8.dp)
             )
         }
     }
@@ -424,29 +422,6 @@ fun OptionItem(
         }
     }
 }
-
-/*@Composable
-fun SliderCars(
-    selectedCar: String,
-    onCarSelected: (String) -> Unit,
-    carViewModel: CarViewModel = viewModel()
-) {
-    val cars by carViewModel.cars.collectAsState()
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight()
-    ) {
-        itemsIndexed(cars) { index, car ->
-            CarItem(
-                car = car,
-                isSelected = car.name == selectedCar,
-                onCarSelected = { onCarSelected(car.name) }
-            )
-        }
-    }
-}*/
 
 @Composable
 fun CarItem(

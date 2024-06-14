@@ -3,7 +3,7 @@ package com.ruki.tierbnb
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -62,7 +62,7 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -106,7 +106,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(TIRAMISU)
 @Composable
 fun BottomBarAnimationApp(
     navController: NavHostController,
