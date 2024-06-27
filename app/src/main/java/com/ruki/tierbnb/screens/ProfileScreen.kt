@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.SubcomposeAsyncImage
 import com.google.firebase.auth.FirebaseAuth
@@ -81,11 +82,14 @@ fun ProfileScreen(
 
     val userAuth = auth.currentUser
 
+    userViewModel.fetchUser()
     val user by userViewModel.user.collectAsState()
 
     var car by remember { mutableStateOf<Car?>(null) }
     val cars by carViewModel.cars.collectAsState()
+
     car = cars.find { it.id == user?.reservedCar?.carId }
+    println("PEDER: $car")
 
 
     var newPassword by remember { mutableStateOf(user?.password) }

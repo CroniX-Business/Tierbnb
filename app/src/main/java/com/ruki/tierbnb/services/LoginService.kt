@@ -34,10 +34,10 @@ fun login(
                 }
             } else {
                 val errorText = when (task.exception) {
-                    is FirebaseAuthInvalidUserException -> "Invalid user. Please check your email."
-                    is FirebaseAuthInvalidCredentialsException -> "Invalid credentials. Please check your email and password."
-                    is FirebaseAuthUserCollisionException -> "User with this email already exists."
-                    else -> "Authentication failed. Please try again later."
+                    is FirebaseAuthInvalidUserException -> "Nevažeći korisnik. Provjerite svoju e-poštu."
+                    is FirebaseAuthInvalidCredentialsException -> "Nevažeće vjerodajnice. Provjerite svoju e-poštu i lozinku."
+                    is FirebaseAuthUserCollisionException -> "Korisnik s ovom e-poštom već postoji."
+                    else -> "Provjera autentičnosti nije uspjela. Molimo pokušajte ponovo kasnije."
                 }
                 showToast(context, errorText)
                 navController.navigate("login_screen") {

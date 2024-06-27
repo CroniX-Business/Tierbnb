@@ -62,6 +62,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -453,7 +454,7 @@ fun CarReservationScreen(
                                             updateReservation(it, auth, firstDateSelected, lastDateSelected, true, carViewModel) { success ->
                                                 if (success) {
                                                     notificationHandler.showSimpleNotification(it, firstDateSelected, lastDateSelected, fullPrice)
-
+                                                    println(carViewModel.cars)
 
                                                     navController.navigate(NavigationItem.HomeScreen.route) {
                                                         popUpTo(navController.graph.startDestinationId)

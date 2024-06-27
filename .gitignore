@@ -14,3 +14,7 @@
 .cxx
 local.properties
 google-services.json
+key.jks
+app/release/*.apk
+app/release/baselineProfiles/
+app/release/output-metadata.json

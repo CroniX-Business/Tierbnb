@@ -43,7 +43,7 @@ fun register(
                 val errorText = when (task.exception) {
                     is FirebaseAuthInvalidUserException -> "Ne postojeći korisnik."
                     is FirebaseAuthInvalidCredentialsException -> "Nevažeći podatci."
-                    is FirebaseAuthUserCollisionException -> "User with this email already exists."
+                    is FirebaseAuthUserCollisionException -> "Korisnik s ovom e-poštom već postoji."
                     else -> "Registracija neuspješna. Pokušajte ponovo."
                 }
                 showToast(context, errorText)
